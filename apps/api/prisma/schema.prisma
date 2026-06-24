@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  PROFESSIONAL
+  CLIENT
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+// ─────────────────────────────────────────────
+// USERS & PROFILES
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CLIENT)
+  name         String
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  appointmentsAsClient       Appointment[]             @relation("ClientAppointments")
+  appointmentsAsProfessional Appointment[]             @relation("ProfessionalAppointments")
+  servicesAsProfessional     Service[]
+  scheduleBlocks             ScheduleBlock[]
+  statusChanges              AppointmentStatusHistory[]
+  payments                   Payment[]
+  packagePurchases           PackagePurchase[]
+  notifications              Notification[]
+  auditLogs                  AuditLog[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// PHYSICAL SPACES
+// ─────────────────────────────────────────────
+
+model Space {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  capacity    Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  services       Service[]
+  appointments   Appointment[]
+  scheduleBlocks ScheduleBlock[]
+
+  @@map("spaces")
+}
+
+// ─────────────────────────────────────────────
+// SERVICE CATEGORIES
+// ─────────────────────────────────────────────
+
+model ServiceCategory {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+
+  services Service[]
+
+  @@map("service_categories")
+}
+
+// ─────────────────────────────────────────────
+// SERVICES
+// ─────────────────────────────────────────────
+
+model Service {
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  categoryId       String?
+  spaceId          String?
+  professionalId   String?
+  durationMinutes  Int
+  bufferMinutes    Int      @default(0)
+  price            Decimal  @db.Decimal(10, 2)
+  maxParticipants  Int      @default(1)
+  color            String   @default("#3B82F6")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  category     ServiceCategory? @relation(fields: [categoryId], references: [id])
+  space        Space?           @relation(fields: [spaceId], references: [id])
+  professional User?            @relation(fields: [professionalId], references: [id])
+  packages     ServicePackage[]
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+// ─────────────────────────────────────────────
+// SERVICE PACKAGES
+// ─────────────────────────────────────────────
+
+model ServicePackage {
+  id           String   @id @default(cuid())
+  serviceId    String
+  name         String
+  sessionCount Int
+  price        Decimal  @db.Decimal(10, 2)
+  validityDays Int      @default(90)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  service   Service           @relation(fields: [serviceId], references: [id])
+  purchases PackagePurchase[]
+
+  @@map("service_packages")
+}
+
+// ─────────────────────────────────────────────
+// BUSINESS HOURS
+// ─────────────────────────────────────────────
+
+model BusinessHours {
+  id        String    @id @default(cuid())
+  dayOfWeek DayOfWeek
+  openTime  String    // "08:00"
+  closeTime String    // "21:00"
+  isActive  Boolean   @default(true)
+
+  @@unique([dayOfWeek, openTime])
+  @@map("business_hours")
+}
+
+// ─────────────────────────────────────────────
+// SCHEDULE BLOCKS (holidays, maintenance, etc.)
+// ─────────────────────────────────────────────
+
+model ScheduleBlock {
+  id             String   @id @default(cuid())
+  professionalId String?
+  spaceId        String?
+  startTime      DateTime
+  endTime        DateTime
+  reason         String
+  createdById    String
+  createdAt      DateTime @default(now())
+
+  professional User?  @relation(fields: [professionalId], references: [id])
+  space        Space? @relation(fields: [spaceId], references: [id])
+  createdBy    User   @relation("BlockCreator", fields: [createdById], references: [id])
+
+  @@map("schedule_blocks")
+}
+
+// ─────────────────────────────────────────────
+// APPOINTMENTS
+// ─────────────────────────────────────────────
+
+model Appointment {
+  id               String            @id @default(cuid())
+  serviceId        String
+  spaceId          String
+  professionalId   String
+  clientId         String
+  startTime        DateTime
+  endTime          DateTime
+  status           AppointmentStatus @default(SCHEDULED)
+  notes            String?
+  packagePurchaseId String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  service        Service                  @relation(fields: [serviceId], references: [id])
+  space          Space                    @relation(fields: [spaceId], references: [id])
+  professional   User                     @relation("ProfessionalAppointments", fields: [professionalId], references: [id])
+  client         User                     @relation("ClientAppointments", fields: [clientId], references: [id])
+  packagePurchase PackagePurchase?        @relation(fields: [packagePurchaseId], references: [id])
+  statusHistory  AppointmentStatusHistory[]
+  payment        Payment?
+  notifications  Notification[]
+
+  @@map("appointments")
+}
+
+model AppointmentStatusHistory {
+  id            String            @id @default(cuid())
+  appointmentId String
+  status        AppointmentStatus
+  changedById   String
+  changedAt     DateTime          @default(now())
+  notes         String?
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  changedBy   User        @relation(fields: [changedById], references: [id])
+
+  @@map("appointment_status_history")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────
+
+model Payment {
+  id               String        @id @default(cuid())
+  appointmentId    String?       @unique
+  packagePurchaseId String?      @unique
+  clientId         String
+  amount           Decimal       @db.Decimal(10, 2)
+  amountPaid       Decimal       @db.Decimal(10, 2) @default(0)
+  method           PaymentMethod?
+  status           PaymentStatus @default(PENDING)
+  paidAt           DateTime?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  appointment     Appointment?     @relation(fields: [appointmentId], references: [id])
+  packagePurchase PackagePurchase? @relation(fields: [packagePurchaseId], references: [id])
+  client          User             @relation(fields: [clientId], references: [id])
+
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+// PACKAGE PURCHASES
+// ─────────────────────────────────────────────
+
+model PackagePurchase {
+  id             String   @id @default(cuid())
+  clientId       String
+  packageId      String
+  purchaseDate   DateTime @default(now())
+  expiresAt      DateTime
+  sessionsTotal  Int
+  sessionsUsed   Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  client       User           @relation(fields: [clientId], references: [id])
+  package      ServicePackage @relation(fields: [packageId], references: [id])
+  appointments Appointment[]
+  payment      Payment?
+
+  @@map("package_purchases")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id            String    @id @default(cuid())
+  userId        String
+  type          String    // APPOINTMENT_CONFIRMED | REMINDER_24H | REMINDER_2H | CANCELLED
+  title         String
+  body          String
+  isRead        Boolean   @default(false)
+  sentAt        DateTime  @default(now())
+  appointmentId String?
+
+  user        User         @relation(fields: [userId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}

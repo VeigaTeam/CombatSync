@@ -1,0 +1,26 @@
+# ============================================================
+# CombatSync — Terraform Variables
+# Copie para terraform.tfvars e preencha os valores.
+# NUNCA comite terraform.tfvars no git.
+# ============================================================
+
+# Supabase
+# Crie em: https://supabase.com/dashboard/account/tokens
+supabase_access_token   = "sbp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+supabase_organization_id = "xxxxxxxxxxxxxxxxxxxxxxxx"
+supabase_db_password     = "SenhaForte@123!"
+
+# Vercel
+# Crie em: https://vercel.com/account/tokens
+vercel_api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+vercel_team_id   = ""  # Deixe vazio para conta pessoal
+
+# Terraform Cloud
+# O token já está configurado no workspace via UI.
+# Necessário apenas para rodar localmente.
+tfc_api_token = "evEae4nVluwpew.atlasv1.xxxxxxxxx"
+
+# App
+jwt_secret  = "sua-chave-secreta-jwt-minimo-32-caracteres"
+environment = "production"
+github_repo = "rveiga08/combatsync"
