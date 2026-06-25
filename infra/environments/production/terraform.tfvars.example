@@ -1,0 +1,24 @@
+# ============================================================
+# CombatSync — Production Variables
+# Copie para terraform.tfvars e preencha os valores reais.
+# NUNCA comite terraform.tfvars no git.
+# ============================================================
+
+# Supabase — https://supabase.com/dashboard/account/tokens
+supabase_access_token    = "sbp_xxxx..."
+supabase_organization_id = "xxxxxxxxxxxxxxxx"
+supabase_db_password     = "senha-forte-aqui"
+
+# Vercel — https://vercel.com/account/tokens
+vercel_api_token = "vcp_xxxx..."
+vercel_team_id   = ""  # Deixe vazio para conta pessoal
+
+# JWT Secret — gerar com: openssl rand -base64 32
+jwt_secret = "sua-chave-secreta-minimo-32-caracteres"
+
+# Railway — URL gerada após o primeiro deploy manual
+railway_api_url = "https://combatsync-api.up.railway.app"
+
+# App
+project_name = "combatsync"
+github_repo  = "rveiga08/combatsync"

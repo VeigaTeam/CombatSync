@@ -1,0 +1,19 @@
+# ============================================================
+# CombatSync — Staging (HML) Variables
+# Copie para terraform.tfvars e preencha os valores.
+# NUNCA comite terraform.tfvars no git.
+# ============================================================
+
+supabase_access_token    = "sbp_xxxx..."
+supabase_organization_id = "xxxxxxxxxxxxxxxx"
+supabase_db_password     = "senha-forte-hml-diferente-do-prd"
+
+vercel_api_token = "vcp_xxxx..."
+vercel_team_id   = ""
+
+jwt_secret = "chave-jwt-hml-diferente-do-prd"
+
+railway_api_url = "https://combatsync-api-staging.up.railway.app"
+
+project_name = "combatsync-staging"
+github_repo  = "rveiga08/combatsync"

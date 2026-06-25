@@ -4,11 +4,14 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
+  # ─────────────────────────────────────────────
+  # Lint, build e testes
+  # ─────────────────────────────────────────────
   lint-and-build:
-    name: Lint & Build
+    name: Lint, Build & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +31,8 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: apps/api
+        env:
+          DATABASE_URL: "postgresql://postgres:dummy@localhost:5432/dummy"
         run: pnpm db:generate
 
       - name: Lint
@@ -35,12 +40,20 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: "https://combatsync-api.up.railway.app"
 
+      - name: Test
+        run: pnpm test --passWithNoTests
+
+  # ─────────────────────────────────────────────
+  # Deploy API → Railway (apenas branch main)
+  # ─────────────────────────────────────────────
   deploy-api:
-    name: Deploy API → Railway
+    name: Deploy API → Railway (PRD)
     needs: lint-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
@@ -54,22 +67,58 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: railway up --service combatsync-api
 
-  deploy-infra:
-    name: Plan/Apply Terraform → TF Cloud
+      - name: Run database migrations
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
+        run: npx prisma migrate deploy
+
+  # ─────────────────────────────────────────────
+  # Deploy API HML → Railway (apenas branch develop)
+  # ─────────────────────────────────────────────
+  deploy-api-staging:
+    name: Deploy API → Railway (HML)
     needs: lint-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway (staging)
+        working-directory: apps/api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+        run: railway up --service combatsync-api-staging
+
+      - name: Run database migrations (staging)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING }}
+        run: npx prisma migrate deploy
+
+  # ─────────────────────────────────────────────
+  # Deploy Infra PRD → Terraform (apenas main)
+  # ─────────────────────────────────────────────
+  deploy-infra-production:
+    name: Terraform Apply → PRD
+    needs: lint-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     defaults:
       run:
-        working-directory: infra
+        working-directory: infra/environments/production
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: hashicorp/setup-terraform@v3
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: "1.9.0"
 
       - name: Terraform Init
         run: terraform init
@@ -77,10 +126,46 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
-        continue-on-error: true
+      - name: Terraform Apply
+        run: |
+          terraform apply -auto-approve \
+            -var="supabase_access_token=${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -var="supabase_organization_id=${{ secrets.SUPABASE_ORG_ID }}" \
+            -var="supabase_db_password=${{ secrets.SUPABASE_DB_PASSWORD }}" \
+            -var="vercel_api_token=${{ secrets.VERCEL_API_TOKEN }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET }}"
+
+  # ─────────────────────────────────────────────
+  # Deploy Infra HML → Terraform (apenas develop)
+  # ─────────────────────────────────────────────
+  deploy-infra-staging:
+    name: Terraform Apply → HML
+    needs: lint-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    defaults:
+      run:
+        working-directory: infra/environments/staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
 
       - name: Terraform Apply
-        if: github.event_name == 'push'
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve \
+            -var="supabase_access_token=${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -var="supabase_organization_id=${{ secrets.SUPABASE_ORG_ID }}" \
+            -var="supabase_db_password=${{ secrets.SUPABASE_DB_PASSWORD_STAGING }}" \
+            -var="vercel_api_token=${{ secrets.VERCEL_API_TOKEN }}" \
+            -var="jwt_secret=${{ secrets.JWT_SECRET_STAGING }}"

@@ -6,8 +6,20 @@ dist/
 .env.local
 .env.production
 *.tfvars
+!*.tfvars.example
 .terraform/
 *.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
 *.log
 .DS_Store
 coverage/
+
+# Mobile
+apps/mobile/.expo/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/google-service-account.json
+
+# Changeset
+.changeset/*.md

@@ -3,16 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
+    "dev": "turbo run dev --filter=@combatsync/web --filter=@combatsync/api",
+    "dev:all": "turbo run dev",
+    "dev:mobile": "turbo run dev --filter=@combatsync/mobile",
+    "build": "turbo run build --filter=@combatsync/web --filter=@combatsync/api",
     "start": "turbo run start",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
-    "db:studio": "pnpm --filter @combatsync/api db:studio"
+    "db:studio": "pnpm --filter @combatsync/api db:studio",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
   },
