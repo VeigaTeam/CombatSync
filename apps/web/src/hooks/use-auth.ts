@@ -1,27 +1,31 @@
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { authApi, getApiError } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import { isAuthenticated } from '@/lib/auth';
-import type { LoginRequest } from '@/types';
+import type { LoginRequest, User } from '@/types';
 
 export function useAuth() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isAuthenticated: storeAuth, logout: storeLogout, setTokensAndUser, setUser, setLoading } = useAuthStore();
 
-  // Fetch current user if we have a valid token
-  const { isLoading: isFetchingUser } = useQuery({
+  const { data: userData, isLoading: isFetchingUser, isError: isFetchError } = useQuery<User>({
     queryKey: ['auth', 'me'],
     queryFn: authApi.me,
     enabled: isAuthenticated(),
     retry: false,
     staleTime: 5 * 60 * 1000,
-    onSuccess: (data) => setUser(data),
-    onError: () => {
-      storeLogout();
-    },
-  } as Parameters<typeof useQuery>[0]);
+  });
+
+  useEffect(() => {
+    if (userData) setUser(userData);
+  }, [userData, setUser]);
+
+  useEffect(() => {
+    if (isFetchError) storeLogout();
+  }, [isFetchError, storeLogout]);
 
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginRequest) => authApi.login(credentials),
