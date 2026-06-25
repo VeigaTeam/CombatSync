@@ -6,21 +6,21 @@
 
 # Supabase
 # Crie em: https://supabase.com/dashboard/account/tokens
-supabase_access_token   = "sbp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-supabase_organization_id = "xxxxxxxxxxxxxxxxxxxxxxxx"
-supabase_db_password     = "SenhaForte@123!"
+supabase_access_token   = "sbp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+supabase_organization_id = "sua-org-id"
+supabase_db_password     = "SenhaSegura123!"
 
 # Vercel
 # Crie em: https://vercel.com/account/tokens
-vercel_api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+vercel_api_token = "vcp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 vercel_team_id   = ""  # Deixe vazio para conta pessoal
 
 # Terraform Cloud
 # O token já está configurado no workspace via UI.
 # Necessário apenas para rodar localmente.
-tfc_api_token = "evEae4nVluwpew.atlasv1.xxxxxxxxx"
+tfc_api_token = "SEU_TFC_TOKEN_AQUI"
 
 # App
-jwt_secret  = "sua-chave-secreta-jwt-minimo-32-caracteres"
+jwt_secret  = "gere-com-openssl-rand-hex-32"
 environment = "production"
-github_repo = "rveiga08/combatsync"
+github_repo = "seu-usuario/combatsync"

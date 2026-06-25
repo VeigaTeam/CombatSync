@@ -1,0 +1,53 @@
+name: Mobile Build (Android APK)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile/**'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --filter @combatsync/mobile
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK (preview)
+        working-directory: apps/mobile
+        run: eas build --platform android --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+      - name: Get build URL
+        working-directory: apps/mobile
+        run: |
+          BUILD_URL=$(eas build:list --platform android --limit 1 --json | jq -r '.[0].artifacts.buildUrl // "building..."')
+          echo "## Android APK Build" >> $GITHUB_STEP_SUMMARY
+          echo "Download: $BUILD_URL" >> $GITHUB_STEP_SUMMARY

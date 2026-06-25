@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@combatsync/web", "@combatsync/api"]],
+  "linked": [["@combatsync/web", "@combatsync/api", "@combatsync/mobile"]],
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

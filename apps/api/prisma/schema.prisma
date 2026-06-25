@@ -71,7 +71,8 @@ model User {
   appointmentsAsClient       Appointment[]             @relation("ClientAppointments")
   appointmentsAsProfessional Appointment[]             @relation("ProfessionalAppointments")
   servicesAsProfessional     Service[]
-  scheduleBlocks             ScheduleBlock[]
+  scheduleBlocks             ScheduleBlock[]         @relation("BlockProfessional")
+  scheduleBlocksCreated      ScheduleBlock[]         @relation("BlockCreator")
   statusChanges              AppointmentStatusHistory[]
   payments                   Payment[]
   packagePurchases           PackagePurchase[]
@@ -194,7 +195,7 @@ model ScheduleBlock {
   createdById    String
   createdAt      DateTime @default(now())
 
-  professional User?  @relation(fields: [professionalId], references: [id])
+  professional User?  @relation("BlockProfessional", fields: [professionalId], references: [id])
   space        Space? @relation(fields: [spaceId], references: [id])
   createdBy    User   @relation("BlockCreator", fields: [createdById], references: [id])
 
