@@ -22,7 +22,7 @@ export class PaymentsService {
         data: {
           amountPaid: dto.amountPaid,
           method: dto.method,
-          status: dto.amountPaid >= payment.amount ? 'PAID' : 'PARTIAL',
+          status: (dto.amountPaid ?? 0) >= Number(payment.amount) ? 'PAID' : 'PARTIAL',
           paidAt: new Date(),
           notes: dto.notes,
         },

@@ -65,7 +65,7 @@ export class DashboardService {
   }
 
   async getRevenueChart(year: number) {
-    const data = [];
+    const data: { month: number; revenue: number; appointments: number }[] = [];
     for (let month = 0; month < 12; month++) {
       const start = new Date(year, month, 1);
       const end = new Date(year, month + 1, 0, 23, 59, 59);
