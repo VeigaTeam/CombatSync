@@ -1,5 +1,5 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -9,7 +9,7 @@ interface StatsCardProps {
   value: string | number;
   change?: number;
   changeLabel?: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   iconColor?: string;
   iconBg?: string;
   isLoading?: boolean;

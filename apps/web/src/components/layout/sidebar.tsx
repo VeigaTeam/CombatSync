@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
+import type { LucideIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -28,7 +28,7 @@ import { initials } from '@/lib/utils';
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   badge?: number;
 }
 
