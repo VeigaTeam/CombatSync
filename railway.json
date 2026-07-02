@@ -5,7 +5,7 @@
     "buildCommand": "npx --yes pnpm@9.15.9 install --no-frozen-lockfile && cd apps/api && npx prisma generate && npx nest build"
   },
   "deploy": {
-    "startCommand": "node apps/api/dist/main",
+    "startCommand": "sh -c 'echo START && ls /app/apps/api/dist/ 2>&1 && node /app/apps/api/dist/main 2>&1'",
     "healthcheckPath": "/api/v1/health",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
